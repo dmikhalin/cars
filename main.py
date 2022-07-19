@@ -100,6 +100,7 @@ class Game:
 
     def move_cars(self):
         track_map = []
+        cars_coords = {car.get_position() for car in self.cars}
         for i in range(self.labyrinth.track.height):
             line = []
             for j in range(self.labyrinth.track.width):
@@ -111,12 +112,13 @@ class Game:
                     symb = "S"
                 elif tile_id == self.labyrinth.finish_tile:
                     symb = "F"
+                if (i, j) in cars_coords:
+                    symb = "C"
                 line.append(symb)
             track_map.append("".join(line))
-        # TODO: Add cars to the map
         cars_coords = {}
         for car in self.cars:
-            vy, vx = car.move(track_map, (car.row, car.col), (car.vy, car.vx))
+            vy, vx = car.move(track_map[:], (car.row, car.col), (car.vy, car.vx))
             if abs(vx - car.vx) > 1 or abs(vy - car.vy) > 1:
                 vx = car.vx
                 vy = car.vy
