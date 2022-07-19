@@ -1,0 +1,33 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "": {
+            "scaleInDock": 0.3105,
+            "scaleInEditor": 1
+        },
+        "#race_track": {
+            "scaleInEditor": 1
+        }
+    },
+    "last.imagePath": "/Users/dmitry/Downloads/racing-pack/Spritesheets",
+    "map.height": 30,
+    "map.lastUsedFormat": "tmx",
+    "map.renderOrder": null,
+    "openFiles": [
+    ],
+    "project": "cars-tiled.tiled-project",
+    "recentFiles": [
+    ],
+    "tileset.embedInMap": true,
+    "tileset.spacing": 2,
+    "tileset.tileSize": {
+        "height": 128,
+        "width": 128
+    }
+}
