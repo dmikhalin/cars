@@ -1,30 +1,32 @@
 import pygame
+import pytmx
 from math import atan2, pi
 
 from player.bot import move as move0
 from player2.bot import move as move1
 
-WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1000, 1000
+WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 800, 800
 FPS = 15
 MAPS_DIR = "maps"
 IMAGES_DIR = "images"
-LEVELS = ["map1.txt"]
+LEVELS = ["map1.tmx"]
 TILE_SIZE = 32
 EVENT_TYPE = 30
-DELAY = 100
+DELAY = 200
 
 
 class Labyrinth:
 
     def __init__(self, filename):
-        self.track = open(f"{MAPS_DIR}/{filename}").readlines()
-        self.height = len(self.track)
-        self.width = len(self.track[0])
+        self.track = pytmx.load_pygame(f"{MAPS_DIR}/{filename}")
+        self.height = self.track.height
+        self.width = self.track.width
         self.tile_size = min(WINDOW_HEIGHT // self.height, WINDOW_WIDTH // self.width)
-        self.start_tile = "S"
-        self.finish_tile = "F"
-        self.free_tiles = [".", "S", "F"]
+        self.start_tile = 78
+        self.finish_tile = 79
+        self.free_tiles = [175, 78, 79]
 
+    # Deprecated
     def get_tile_image(self, row, col):
         color = "black"
         if self.track[row][col] == ".":
@@ -38,11 +40,16 @@ class Labyrinth:
     def render(self, screen):
         for row in range(self.height):
             for col in range(self.width):
-                image = self.get_tile_image(row, col)
-                screen.blit(image, (col * self.tile_size, row * self.tile_size))
+                tile_image = self.track.get_tile_image(col, row, 0)
+                if tile_image:
+                    image = pygame.transform.smoothscale(tile_image, (self.tile_size, self.tile_size))
+                    screen.blit(image, (col * self.tile_size, row * self.tile_size))
 
     def get_tile_id(self, position):
-        return self.track[position[0]][position[1]]
+        gid = self.track.get_tile_gid(position[1], position[0], 0)
+        if gid == 0:
+            return 0
+        return self.track.tiledgidmap[gid]
 
     def is_in_map(self, position):
         return 0 <= position[0] < self.height and 0 <= position[0] < self.width
@@ -92,9 +99,24 @@ class Game:
             car.render(screen, self.labyrinth.tile_size)
 
     def move_cars(self):
+        track_map = []
+        for i in range(self.labyrinth.track.height):
+            line = []
+            for j in range(self.labyrinth.track.width):
+                tile_id = self.labyrinth.get_tile_id((i, j))
+                symb = "#"
+                if tile_id in self.labyrinth.free_tiles:
+                    symb = "."
+                if tile_id == self.labyrinth.start_tile:
+                    symb = "S"
+                elif tile_id == self.labyrinth.finish_tile:
+                    symb = "F"
+                line.append(symb)
+            track_map.append("".join(line))
+        # TODO: Add cars to the map
         cars_coords = {}
         for car in self.cars:
-            vy, vx = car.move(self.labyrinth.track, (car.row, car.col), (car.vy, car.vx))
+            vy, vx = car.move(track_map, (car.row, car.col), (car.vy, car.vx))
             if abs(vx - car.vx) > 1 or abs(vy - car.vy) > 1:
                 vx = car.vx
                 vy = car.vy
@@ -130,9 +152,10 @@ class Game:
                     car.vx = vx
                     car.vy = vy
             car.set_position((next_row, next_col))
-            if (next_row, next_col) not in cars_coords:
-                cars_coords[(next_row, next_col)] = []
-            cars_coords[(next_row, next_col)].append(car)
+            if self.labyrinth.get_tile_id((next_row, next_col)) != self.labyrinth.finish_tile:
+                if (next_row, next_col) not in cars_coords:
+                    cars_coords[(next_row, next_col)] = []
+                cars_coords[(next_row, next_col)].append(car)
         for coords in list(cars_coords):
             if len(cars_coords[coords]) > 1:
                 free_tiles = {(coords[0] + dy, coords[1] + dx) for dx in (-1, 0, 1) for dy in (-1, 0, 1)
@@ -183,12 +206,12 @@ def main():
 
     labyrinth = Labyrinth(LEVELS[0])
     car_images = load_car_images()
-    cars = [Car(car_images[0], move0, (29, 5), "Speedy"),
-            Car(car_images[1], move0, (29, 7), "Luigi"),
-            Car(car_images[2], move0, (29, 9), "McQueen"),
-            Car(car_images[3], move0, (29, 11), "Quido"),
-            Car(car_images[4], move1, (29, 13), "Ramone"),
-            Car(car_images[5], move1, (29, 3), "Lizzie")]
+    cars = [Car(car_images[0], move0, (28, 2), "Speedy"),
+            Car(car_images[1], move0, (28, 3), "Luigi"),
+            Car(car_images[2], move0, (28, 4), "McQueen"),
+            Car(car_images[3], move0, (28, 5), "Quido"),
+            Car(car_images[4], move1, (28, 6), "Ramone"),
+            Car(car_images[5], move1, (28, 7), "Lizzie")]
     game = Game(labyrinth, cars)
 
     clock = pygame.time.Clock()

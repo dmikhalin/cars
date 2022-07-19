@@ -9,7 +9,7 @@ def move(track: list[str], car_position: tuple[int, int], velocity: tuple[int, i
         "." --- free cell
         "S" --- start position
         "F" --- finish
-        "C" --- cars
+        "C" --- car
     :param car_position: (row, col), rows --- from top to bottom, 0-indexed
     :param velocity: (v_row, v_col)
     :return: new velocity (new_v_row, new_v_col), such that
@@ -17,7 +17,7 @@ def move(track: list[str], car_position: tuple[int, int], velocity: tuple[int, i
     """
     row, col = car_position
     v_row, v_col = velocity
-    if 0 <= row + v_row < len(track) and 0 <= col + v_col < len(track[0]) and track[row + v_row][col + v_col] in ".FS":
+    if 0 <= row + v_row < len(track) and 0 <= col + v_col < len(track[0]) and track[row + v_row][col + v_col] in ".FSC":
         next_pos = bfs_next_pos(track, (row + v_row, col + v_col))
         return next_pos[0] - row, next_pos[1] - col
     else:
