@@ -13,7 +13,7 @@ IMAGES_DIR = "images"
 LEVELS = ["map1.tmx"]
 TILE_SIZE = 32
 EVENT_TYPE = 30
-DELAY = 100
+DELAY = 200
 
 
 class Labyrinth:
@@ -69,6 +69,8 @@ class Car:
         self.vy = 0
         self.name = name
         self.rotate_angle = 0
+        self.disqualified = False
+        self.finished = False
 
     def get_position(self):
         return self.row, self.col
@@ -93,13 +95,15 @@ class Game:
     def __init__(self, labyrinth, cars):
         self.labyrinth = labyrinth
         self.cars = cars
+        self.time = 0
+        self.results = []
 
     def render(self, screen):
         self.labyrinth.render(screen)
         for car in self.cars:
             car.render(screen, self.labyrinth.tile_size)
 
-    def move_cars(self):
+    def symbol_map(self) -> list[str]:
         track_map = []
         cars_coords = {car.get_position() for car in self.cars}
         for i in range(self.labyrinth.track.height):
@@ -117,13 +121,24 @@ class Game:
                     symb = "C"
                 line.append(symb)
             track_map.append("".join(line))
+        return track_map
+
+    def move_cars(self):
+        self.time += 1
+        track_map = self.symbol_map()
         cars_coords = {}
         for car in self.cars:
-            try:
-                with time_limit(1):
-                    vy, vx = car.move(track_map[:], (car.row, car.col), (car.vy, car.vx))
-            except TimeoutException as e:
-                print("Timed out!")
+            if car.finished:
+                continue
+            vx = car.vx
+            vy = car.vy
+            if not car.disqualified:
+                try:
+                    with time_limit(1):
+                        vy, vx = car.move(track_map[:], (car.row, car.col), (car.vy, car.vx))
+                except TimeoutException as e:
+                    print("Timed out!")
+                    car.disqualified = True
 
             if abs(vx - car.vx) > 1 or abs(vy - car.vy) > 1:
                 vx = car.vx
@@ -177,15 +192,19 @@ class Game:
                         cars_coords[car.get_position()] = [car]
 
     def check_winners(self) -> list[str]:
-        winners = []
         for car in self.cars:
+            if car.finished:
+                continue
             if self.labyrinth.get_tile_id(car.get_position()) == self.labyrinth.finish_tile:
-                winners.append(car.name)
-        return winners
+                car.finished = True
+                self.results.append((car.name, self.time))
+        if len(self.results) >= 3:
+            return self.results
+        return []
 
 
 def show_message(screen, message):
-    font = pygame.font.Font(None, 50)
+    font = pygame.font.Font(None, 30)
     text = font.render(message, 1, (150, 255, 255))
     text_x = WINDOW_WIDTH // 2 - text.get_width() // 2
     text_y = WINDOW_HEIGHT // 2 - text.get_height() // 2
@@ -203,7 +222,7 @@ def load_car_images() -> list:
     car_surfaces[1].blit(all_cars, (0, 0), (125, 15, 60, 100))
     car_surfaces[2].blit(all_cars, (0, 0), (185, 15, 60, 100))
     car_surfaces[3].blit(all_cars, (0, 0), (245, 115, 60, 100))
-    car_surfaces[4].blit(all_cars, (0, 0), (310, 15, 60, 100))
+    car_surfaces[4].blit(all_cars, (0, 0), (370, 15, 60, 100))
     car_surfaces[5].blit(all_cars, (0, 0), (65, 15, 60, 100))
     return car_surfaces
 
@@ -236,7 +255,7 @@ def main():
         game.render(screen)
         if winners := game.check_winners():
             game_over = True
-            show_message(screen, "Winners: " + ", ".join(winners))
+            show_message(screen, "Winners: " + ", ".join(f"{player[0]}: {player[1]}" for player in winners))
         pygame.display.flip()
         clock.tick(FPS)
     pygame.quit()

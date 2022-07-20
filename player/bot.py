@@ -1,4 +1,5 @@
 from random import randint, shuffle
+from time import sleep
 
 
 def move(track: list[str], car_position: tuple[int, int], velocity: tuple[int, int]) -> tuple[int, int]:
@@ -15,6 +16,7 @@ def move(track: list[str], car_position: tuple[int, int], velocity: tuple[int, i
     :return: new velocity (new_v_row, new_v_col), such that
              abs(new_v_row - v_col) <= 1 and abs(new_v_row - v_col) <= 1
     """
+    # sleep(0.05)
     row, col = car_position
     v_row, v_col = velocity
     if 0 <= row + v_row < len(track) and 0 <= col + v_col < len(track[0]) and track[row + v_row][col + v_col] in ".FSC":
