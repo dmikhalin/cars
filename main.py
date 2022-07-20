@@ -29,17 +29,6 @@ class Labyrinth:
         self.finish_tile = 79
         self.free_tiles = [175, 78, 79]
 
-    # Deprecated
-    def get_tile_image(self, row, col):
-        color = "black"
-        if self.track[row][col] == ".":
-            color = "white"
-        elif self.track[row][col] == "#":
-            color = "blue"
-        surf = pygame.Surface((self.tile_size, self.tile_size))
-        pygame.draw.rect(surf, color, (0, 0, self.tile_size, self.tile_size))
-        return surf
-
     def render(self, screen):
         for row in range(self.height):
             for col in range(self.width):
