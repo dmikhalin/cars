@@ -4,8 +4,8 @@ from math import atan2, pi
 from random import randint
 
 from timelimit import time_limit, TimeoutException
-from player.bot import move as move0
-from player2.bot import move as move1
+from player_dm.bot import move as move0
+from player_demo.bot import move as move1
 
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 800, 800
 FPS = 20
