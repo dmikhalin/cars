@@ -1,4 +1,5 @@
-from random import randint
+from random import randint, shuffle
+from time import sleep
 
 
 def move(track: list[str], car_position: tuple[int, int], velocity: tuple[int, int]) -> tuple[int, int]:
@@ -9,17 +10,20 @@ def move(track: list[str], car_position: tuple[int, int], velocity: tuple[int, i
         "." --- free cell
         "S" --- start position
         "F" --- finish
-        "C" --- cars
+        "C" --- car
     :param car_position: (row, col), rows --- from top to bottom, 0-indexed
     :param velocity: (v_row, v_col)
     :return: new velocity (new_v_row, new_v_col), such that
              abs(new_v_row - v_col) <= 1 and abs(new_v_row - v_col) <= 1
     """
+    # sleep(0.05)
     row, col = car_position
     v_row, v_col = velocity
-
-    next_pos = bfs_next_pos(track, car_position)
-    return next_pos[0] - row, next_pos[1] - col
+    if 0 <= row + v_row < len(track) and 0 <= col + v_col < len(track[0]) and track[row + v_row][col + v_col] in ".FSC":
+        next_pos = bfs_next_pos(track, (row + v_row, col + v_col))
+        return next_pos[0] - row, next_pos[1] - col
+    else:
+        return velocity
 
     # return randint(v_row - 1, v_row), randint(v_col - 1, v_col + 1)
     # return randint(v_row - 1, v_row + 1), randint(v_col - 1, v_col + 1)
@@ -32,6 +36,7 @@ def next_points(track: list[str], pos: tuple[int, int]) -> list[tuple[int, int]]
         for j in range(-1, 2):
             if (i != 0 or j != 0) and track[pos[0] + i][pos[1] + j] in ".F":
                 ans.append((pos[0] + i, pos[1] + j))
+    shuffle(ans)
     return ans
 
 
@@ -54,7 +59,7 @@ def bfs_next_pos(track: list[str], car_position: tuple[int, int]) -> tuple[int, 
                 queue.append(nxt)
                 dist[nxt[0]][nxt[1]] = dist[pos[0]][pos[1]] + 1
                 prev[nxt[0]][nxt[1]] = pos
-                if dist[nxt[0]][nxt[1]] < min_dist and track[nxt[0]][nxt[1]] == "F":
+                if track[nxt[0]][nxt[1]] == "F" and dist[nxt[0]][nxt[1]] < min_dist:
                     min_dist = dist[nxt[0]][nxt[1]]
                     finish = nxt
     pos = finish
