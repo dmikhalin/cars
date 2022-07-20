@@ -6,6 +6,7 @@ from random import randint
 from timelimit import time_limit, TimeoutException
 from player_dm.bot import move as move0
 from player_demo.bot import move as move1
+from player_bfs.bot import move as move2
 
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 800, 800
 FPS = 20
@@ -311,9 +312,9 @@ def main():
     cars = [Car(car_images[0], move0, (28, 2), "Speedy"),
             Car(car_images[1], move0, (28, 3), "Luigi"),
             Car(car_images[2], move0, (28, 4), "McQueen"),
-            Car(car_images[3], move0, (28, 5), "Quido"),
+            Car(car_images[3], move1, (28, 5), "Quido"),
             Car(car_images[4], move1, (28, 6), "Ramone"),
-            Car(car_images[5], move1, (28, 7), "Lizzie")]
+            Car(car_images[5], move2, (28, 7), "Lizzie")]
     game = Game(labyrinth, cars)
 
     clock = pygame.time.Clock()
