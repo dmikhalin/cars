@@ -15,7 +15,8 @@ IMAGES_DIR = "images"
 LEVELS = ["map1.tmx"]
 TILE_SIZE = 32
 EVENT_TYPE = 30
-DELAY = 200
+DELAY = 500
+FRAMES_PER_TICK = FPS * DELAY // 1000
 
 
 class Labyrinth:
@@ -55,23 +56,46 @@ class Labyrinth:
 
 class Car:
 
-    def __init__(self, pic, move_function, position, name):
+    def __init__(self, pic, move_function, position, name, time=0):
         self.image = pic
         self.row, self.col = position
+        self.real_y, self.real_x = position
         self.move = move_function
         self.vx = 0
         self.vy = 0
+        self.real_vx = 0
+        self.real_vy = 0
         self.name = name
         self.rotate_angle = 0
         self.lost_control = False
         self.finished = False
         self.paused = False
+        self.time = time
 
     def get_position(self):
         return self.row, self.col
 
     def set_position(self, position):
         self.row, self.col = position
+
+    def get_velocity(self):
+        return self.vy, self.vx
+
+    def set_velocity(self, velocity):
+        self.vy, self.vx = velocity
+
+    def get_real_position(self):
+        return self.real_y, self.real_x
+
+    def set_real_position(self, position):
+        self.real_y, self.real_x = position
+
+    def set_real_velocity(self, velocity):
+        self.real_vy, self.real_vx = velocity
+
+    def move_real(self):
+        self.real_x += self.real_vx
+        self.real_y += self.real_vy
 
     def render(self, screen, tile_size):
         if self.image.get_width() != tile_size:
@@ -81,18 +105,18 @@ class Car:
         rotated_image = pygame.transform.rotate(self.image, self.rotate_angle)
         delta_x = (rotated_image.get_width() - tile_size) // 2
         delta_y = (rotated_image.get_height() - tile_size) // 2
-        screen.blit(rotated_image, (self.col * tile_size - delta_x, self.row * tile_size - delta_y))
+        screen.blit(rotated_image, (self.real_x * tile_size - delta_x, self.real_y * tile_size - delta_y))
         # screen.blit(self.image, (5 * tile_size - delta_x, 29 * tile_size - delta_y))
 
 
 class Boom:
 
-    def __init__(self, position, cars):
+    def __init__(self, position, cars, time):
         self.row, self.col = position
         self.cars = cars
         for car in cars:
             car.paused = True
-        self.time = -1
+        self.time = time
         self.images = [pygame.Surface((240, 240)).convert_alpha() for i in range(48)]
         all_images = pygame.image.load(f"{IMAGES_DIR}/explosions-sprite.png").convert_alpha()
         for k in range(48):
@@ -140,12 +164,15 @@ class Game:
     def render(self, screen):
         self.labyrinth.render(screen)
         for car in self.cars:
+            if car.time == self.time:
+                car.move_real()
             car.render(screen, self.labyrinth.tile_size)
         for boom in list(self.booms):
-            boom.activate(self.free_neighbours(boom.get_position()))
-            boom.render(screen, self.labyrinth.tile_size)
-            if boom.ended:
-                self.booms.discard(boom)
+            if boom.time <= self.time:
+                boom.activate(self.free_neighbours(boom.get_position()))
+                boom.render(screen, self.labyrinth.tile_size)
+                if boom.ended:
+                    self.booms.discard(boom)
 
     def free_neighbours(self, position):
         row, col = position
@@ -181,6 +208,7 @@ class Game:
         track_map = self.symbol_map()
         cars_coords = {}
         for car in self.cars:
+            car.time = self.time
             if car.finished:
                 continue
             if car.paused:
@@ -188,19 +216,17 @@ class Game:
                     cars_coords[car.get_position()] = []
                 cars_coords[car.get_position()].append(car)
                 continue
-            vx = car.vx
-            vy = car.vy
+            vy, vx = car.get_velocity()
             if not car.lost_control:
                 try:
                     with time_limit(1):
-                        vy, vx = car.move(track_map[:], (car.row, car.col), (car.vy, car.vx))
+                        vy, vx = car.move(track_map[:], car.get_position(), car.get_velocity())
                 except TimeoutException as e:
                     print("Timed out!")
                     car.lost_control = True
 
             if abs(vx - car.vx) > 1 or abs(vy - car.vy) > 1:
-                vx = car.vx
-                vy = car.vy
+                vy, vx = car.get_velocity()
             next_row, next_col = car.row + vy, car.col + vx
             if abs(vx) > abs(vy):
                 shift = 1 if vx > 0 else -1
@@ -209,20 +235,17 @@ class Game:
                     y = car.row + vy * (x - car.col) // vx
                     if self.labyrinth.is_finish((y, x)):
                         next_row, next_col = car.row + vy * (x - car.col) // vx, x
-                        car.vx = 0
-                        car.vy = 0
+                        car.set_velocity((0, 0))
                         break
                     elif not self.labyrinth.is_in_map((y, x)) or \
                             not self.labyrinth.is_free((y, x)):
-                        self.booms.add(Boom((y, x), [car]))
+                        self.booms.add(Boom((y, x), [car], self.time + 1))
                         next_row, next_col = car.row + vy * (x - car.col) // vx, x
-                        car.vx = 0
-                        car.vy = 0
+                        car.set_velocity((0, 0))
                         break
                     x += shift
                 else:
-                    car.vx = vx
-                    car.vy = vy
+                    car.set_velocity((vy, vx))
             elif vy:
                 shift = 1 if vy > 0 else -1
                 y = car.row
@@ -230,30 +253,30 @@ class Game:
                     x = car.col + vx * (y - car.row) // vy
                     if self.labyrinth.is_finish((y, x)):
                         next_row, next_col = y, car.col + vx * (y - car.row) // vy
-                        car.vx = 0
-                        car.vy = 0
+                        car.set_velocity((0, 0))
                     if not self.labyrinth.is_in_map((y, x)) or \
                             not self.labyrinth.is_free((y, x)):
-                        self.booms.add(Boom((y, x), [car]))
+                        self.booms.add(Boom((y, x), [car], self.time + 1))
                         next_row, next_col = y, car.col + vx * (y - car.row) // vy
-                        car.vx = 0
-                        car.vy = 0
+                        car.set_velocity((0, 0))
                         break
                     y += shift
                 else:
-                    car.vx = vx
-                    car.vy = vy
+                    car.set_velocity((vy, vx))
+            car.set_real_position(car.get_position())
             car.set_position((next_row, next_col))
+            real_vy = (next_row - car.get_real_position()[0]) / FRAMES_PER_TICK
+            real_vx = (next_col - car.get_real_position()[1]) / FRAMES_PER_TICK
+            car.set_real_velocity((real_vy, real_vx))
             if self.labyrinth.get_tile_id((next_row, next_col)) != self.labyrinth.finish_tile:
                 if (next_row, next_col) not in cars_coords:
                     cars_coords[(next_row, next_col)] = []
                 cars_coords[(next_row, next_col)].append(car)
         for coords in cars_coords:
             if len(cars_coords[coords]) > 1:
-                self.booms.add(Boom(coords, cars_coords[coords]))
+                self.booms.add(Boom(coords, cars_coords[coords], self.time + 1))
                 for car in cars_coords[coords]:
-                    car.vx = 0
-                    car.vy = 0
+                    car.set_velocity((0, 0))
 
     def check_winners(self) -> list[str]:
         for car in self.cars:
