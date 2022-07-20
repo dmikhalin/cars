@@ -2,6 +2,7 @@ import pygame
 import pytmx
 from math import atan2, pi
 
+from timelimit import time_limit, TimeoutException
 from player.bot import move as move0
 from player2.bot import move as move1
 
@@ -12,7 +13,7 @@ IMAGES_DIR = "images"
 LEVELS = ["map1.tmx"]
 TILE_SIZE = 32
 EVENT_TYPE = 30
-DELAY = 200
+DELAY = 100
 
 
 class Labyrinth:
@@ -118,7 +119,12 @@ class Game:
             track_map.append("".join(line))
         cars_coords = {}
         for car in self.cars:
-            vy, vx = car.move(track_map[:], (car.row, car.col), (car.vy, car.vx))
+            try:
+                with time_limit(1):
+                    vy, vx = car.move(track_map[:], (car.row, car.col), (car.vy, car.vx))
+            except TimeoutException as e:
+                print("Timed out!")
+
             if abs(vx - car.vx) > 1 or abs(vy - car.vy) > 1:
                 vx = car.vx
                 vy = car.vy
@@ -180,12 +186,12 @@ class Game:
 
 def show_message(screen, message):
     font = pygame.font.Font(None, 50)
-    text = font.render(message, 1, (50, 70, 0))
+    text = font.render(message, 1, (150, 255, 255))
     text_x = WINDOW_WIDTH // 2 - text.get_width() // 2
     text_y = WINDOW_HEIGHT // 2 - text.get_height() // 2
     text_w = text.get_width()
     text_h = text.get_height()
-    pygame.draw.rect(screen, (200, 150, 50), (text_x - 10, text_y - 10,
+    pygame.draw.rect(screen, (50, 50, 50), (text_x - 10, text_y - 10,
                                               text_w + 20, text_h + 20))
     screen.blit(text, (text_x, text_y))
 
