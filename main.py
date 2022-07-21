@@ -1,28 +1,29 @@
 import pygame
 import pytmx
+
 from math import atan2, pi
 from random import randint, shuffle, random
-
 from timelimit import time_limit, TimeoutException
-from player_dm.bot import move as move0
-from player_demo.bot import move as move1
-from player_bfs.bot import move as move2
 
-PLAYERS = [{"name": "Speedy", "bot": move0, "img": 0, "level": 0.8},
-           {"name": "Luigi", "bot": move0, "img": 1, "level": 0.6},
-           {"name": "McQueen", "bot": move0, "img": 2, "level": 0.5},
+from player_demo.bot import move as move0
+from player_dm.bot import move as move1
+from player_slow.bot import move as move2
+
+PLAYERS = [{"name": "Speedy", "bot": move1, "img": 0, "level": 0.8},
+           {"name": "Luigi", "bot": move1, "img": 1, "level": 0.6},
+           {"name": "McQueen", "bot": move1, "img": 2, "level": 0.5},
            {"name": "Quido", "bot": move1, "img": 3, "level": 0.3},
-           {"name": "Ramone", "bot": move1, "img": 4, "level": 0},
-           {"name": "Lizzie", "bot": move2, "img": 5, "level": 0}]
-WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 800, 800
+           {"name": "Ramone", "bot": move2, "img": 4, "level": 0},
+           {"name": "Lizzie", "bot": move0, "img": 5, "level": 0}]
+WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1000, 800
 FPS = 20
 MAPS_DIR = "maps"
 IMAGES_DIR = "images"
-LEVELS = ["map1.tmx"]
+LEVELS = ["map1.tmx", "map2.tmx"]
 EVENT_TYPE = 30
 DELAY = 300
 FRAMES_PER_TICK = FPS * DELAY // 1000
-WINNERS_NUMBER = 2
+WINNERS_NUMBER = 4
 
 
 class Labyrinth:
@@ -32,9 +33,10 @@ class Labyrinth:
         self.height = self.track.height
         self.width = self.track.width
         self.tile_size = min(WINDOW_HEIGHT // self.height, WINDOW_WIDTH // self.width)
-        self.start_tile = 78
-        self.finish_tile = 79
-        self.free_tiles = [175, 78, 79]
+        self.start_tiles = [78, 47]
+        self.finish_tiles = [79, 449]
+        self.free_tiles = [175] + self.start_tiles + self.finish_tiles
+        self.start_angles = {78: 0, 47: -90}
 
     def render(self, screen):
         for row in range(self.height):
@@ -54,7 +56,7 @@ class Labyrinth:
         result = []
         for row in range(self.height):
             for col in range(self.width):
-                if self.get_tile_id((row, col)) == self.start_tile:
+                if self.get_tile_id((row, col)) in self.start_tiles:
                     result.append((row, col))
         return result
 
@@ -65,7 +67,7 @@ class Labyrinth:
         return self.get_tile_id(position) in self.free_tiles
 
     def is_finish(self, position):
-        return self.get_tile_id(position) == self.finish_tile
+        return self.get_tile_id(position) in self.finish_tiles
 
 
 class Car:
@@ -171,6 +173,8 @@ class Game:
     def __init__(self, labyrinth, cars):
         self.labyrinth = labyrinth
         self.cars = cars
+        for car in self.cars:
+            car.rotate_angle = self.labyrinth.start_angles[self.labyrinth.get_tile_id(car.get_position())]
         self.time = 0
         self.results = []
         self.booms = set()
@@ -204,9 +208,9 @@ class Game:
                 symb = "#"
                 if tile_id in self.labyrinth.free_tiles:
                     symb = "."
-                if tile_id == self.labyrinth.start_tile:
+                if tile_id in self.labyrinth.start_tiles:
                     symb = "S"
-                elif tile_id == self.labyrinth.finish_tile:
+                elif tile_id in self.labyrinth.finish_tiles:
                     symb = "F"
                 if (i, j) in cars_coords:
                     symb = "C"
@@ -286,7 +290,7 @@ class Game:
             real_vy = (next_row - car.get_real_position()[0]) / FRAMES_PER_TICK
             real_vx = (next_col - car.get_real_position()[1]) / FRAMES_PER_TICK
             car.set_real_velocity((real_vy, real_vx))
-            if self.labyrinth.get_tile_id((next_row, next_col)) != self.labyrinth.finish_tile:
+            if self.labyrinth.get_tile_id((next_row, next_col)) not in self.labyrinth.finish_tiles:
                 if (next_row, next_col) not in cars_coords:
                     cars_coords[(next_row, next_col)] = []
                 cars_coords[(next_row, next_col)].append(car)
@@ -302,7 +306,7 @@ class Game:
         for car in self.cars:
             if car.finished:
                 continue
-            if self.labyrinth.get_tile_id(car.get_position()) == self.labyrinth.finish_tile:
+            if self.labyrinth.get_tile_id(car.get_position()) in self.labyrinth.finish_tiles:
                 car.finished = True
                 self.results.append((car.name, self.time))
         if len(self.results) < WINNERS_NUMBER:
@@ -339,7 +343,7 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
 
-    labyrinth = Labyrinth(LEVELS[0])
+    labyrinth = Labyrinth(LEVELS[1])
     car_images = load_car_images()
 
     start_positions = labyrinth.get_start_positions()

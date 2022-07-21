@@ -19,24 +19,27 @@
             "selectedLayer": 0,
             "viewCenter": {
                 "x": 1946.4285714285713,
-                "y": 1767.8571428571431
+                "y": 1774.9999999999995
             }
         },
         "map1.tmx#spritesheet_tiles": {
             "scaleInDock": 0.2136
         }
     },
-    "last.imagePath": "/Users/dmitry/Downloads/racing-pack/Spritesheets",
+    "last.imagePath": "/Users/dmitry/Documents/python/PyCharm/cars/maps",
     "map.height": 30,
     "map.lastUsedFormat": "tmx",
     "map.renderOrder": null,
+    "map.tileHeight": 128,
+    "map.tileWidth": 128,
     "openFiles": [
     ],
     "project": "cars-tiled.tiled-project",
     "recentFiles": [
         "map1.tmx"
     ],
-    "tileset.embedInMap": true,
+    "tileset.embedInMap": false,
+    "tileset.lastUsedFormat": "tsx",
     "tileset.spacing": 2,
     "tileset.tileSize": {
         "height": 128,
