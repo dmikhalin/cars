@@ -3,20 +3,17 @@ import pytmx
 
 from math import atan2, pi
 from random import randint, shuffle, random
-from timelimit import time_limit, TimeoutException
 
 from player_demo.bot import move as move0
-from player_dm.bot import move as move1
-from player_slow.bot import move as move2
 
-PLAYERS = [{"name": "Speedy", "bot": move1, "img": 0, "level": 0.8},
-           {"name": "Luigi", "bot": move1, "img": 1, "level": 0.6},
-           {"name": "McQueen", "bot": move1, "img": 2, "level": 0.5},
-           {"name": "Quido", "bot": move1, "img": 3, "level": 0.3},
-           {"name": "Ramone", "bot": move2, "img": 4, "level": 0},
+PLAYERS = [{"name": "Speedy", "bot": move0, "img": 0, "level": 0.8},
+           {"name": "Luigi", "bot": move0, "img": 1, "level": 0.6},
+           {"name": "McQueen", "bot": move0, "img": 2, "level": 0.5},
+           {"name": "Quido", "bot": move0, "img": 3, "level": 0.3},
+           {"name": "Ramone", "bot": move0, "img": 4, "level": 0},
            {"name": "Lizzie", "bot": move0, "img": 5, "level": 0},
            ]
-WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1100, 800
+WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 900, 600
 FPS = 20
 MAPS_DIR = "maps"
 IMAGES_DIR = "images"
@@ -24,7 +21,7 @@ LEVELS = ["map1.tmx", "map2.tmx"]
 EVENT_TYPE = 30
 DELAY = 300
 FRAMES_PER_TICK = FPS * DELAY // 1000
-WINNERS_NUMBER = 4
+WINNERS_NUMBER = 1
 
 
 class Labyrinth:
@@ -248,12 +245,7 @@ class Game:
             car.time = self.time
             vy, vx = car.get_velocity()
             if not car.lost_control:
-                try:
-                    with time_limit(1):
-                        vy, vx = car.move(track_map[:], car.get_position(), car.get_velocity())
-                except TimeoutException as e:
-                    print("Timed out!")
-                    car.lost_control = True
+                vy, vx = car.move(track_map[:], car.get_position(), car.get_velocity())
 
             if abs(vx - car.vx) > 1 or abs(vy - car.vy) > 1:
                 vy, vx = car.get_velocity()
