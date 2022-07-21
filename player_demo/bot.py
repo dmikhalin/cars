@@ -13,7 +13,7 @@ def move(track: list[str], car_position: tuple[int, int], velocity: tuple[int, i
     :param car_position: (row, col), rows --- from top to bottom, 0-indexed
     :param velocity: (v_row, v_col)
     :return: new velocity (new_v_row, new_v_col), such that
-             abs(new_v_row - v_col) <= 1 and abs(new_v_row - v_col) <= 1
+             abs(new_v_row - v_row) <= 1 and abs(new_v_col - v_col) <= 1
     """
     row, col = car_position
     v_row, v_col = velocity
