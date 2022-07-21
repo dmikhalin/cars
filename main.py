@@ -1,27 +1,28 @@
 import pygame
 import pytmx
 from math import atan2, pi
-from random import randint, shuffle
+from random import randint, shuffle, random
 
 from timelimit import time_limit, TimeoutException
 from player_dm.bot import move as move0
 from player_demo.bot import move as move1
 from player_bfs.bot import move as move2
 
-PLAYERS = [{"name": "Speedy", "bot": move0, "img": 0},
-           {"name": "Luigi", "bot": move0, "img": 1},
-           {"name": "McQueen", "bot": move0, "img": 2},
-           {"name": "Quido", "bot": move1, "img": 3},
-           {"name": "Ramone", "bot": move1, "img": 4},
-           {"name": "Lizzie", "bot": move2, "img": 5}]
+PLAYERS = [{"name": "Speedy", "bot": move0, "img": 0, "level": 0.8},
+           {"name": "Luigi", "bot": move0, "img": 1, "level": 0.6},
+           {"name": "McQueen", "bot": move0, "img": 2, "level": 0.5},
+           {"name": "Quido", "bot": move1, "img": 3, "level": 0.3},
+           {"name": "Ramone", "bot": move1, "img": 4, "level": 0},
+           {"name": "Lizzie", "bot": move2, "img": 5, "level": 0}]
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 800, 800
 FPS = 20
 MAPS_DIR = "maps"
 IMAGES_DIR = "images"
 LEVELS = ["map1.tmx"]
 EVENT_TYPE = 30
-DELAY = 2000
+DELAY = 300
 FRAMES_PER_TICK = FPS * DELAY // 1000
+WINNERS_NUMBER = 2
 
 
 class Labyrinth:
@@ -69,7 +70,7 @@ class Labyrinth:
 
 class Car:
 
-    def __init__(self, pic, move_function, position, name, time=0):
+    def __init__(self, pic, move_function, position, name, level, time=0):
         self.image = pic
         self.row, self.col = position
         self.real_y, self.real_x = position
@@ -83,6 +84,7 @@ class Car:
         self.lost_control = False
         self.finished = False
         self.paused = False
+        self.level = level
         self.time = time
 
     def get_position(self):
@@ -147,7 +149,7 @@ class Boom:
             for car in self.cars:
                 if free_tiles:
                     car.set_position(free_tiles.pop())
-                car.paused = False
+                # car.paused = False
                 # car.rotate_angle = randint(0, 359)
             self.activated = True
 
@@ -192,7 +194,6 @@ class Game:
                 self.labyrinth.is_free((row + dy, col + dx)) and
                 ((row + dy, col + dx) not in cars_coords)}
 
-
     def symbol_map(self) -> list[str]:
         track_map = []
         cars_coords = {car.get_position() for car in self.cars}
@@ -226,6 +227,8 @@ class Game:
             if car.finished:
                 continue
             if car.paused:
+                if random() > car.level:
+                    car.paused = False
                 if car.get_position() not in cars_coords:
                     cars_coords[car.get_position()] = []
                 cars_coords[car.get_position()].append(car)
@@ -254,9 +257,7 @@ class Game:
                         break
                     elif not self.labyrinth.is_in_map((y, x)) or \
                             not self.labyrinth.is_free((y, x)):
-                        boom = Boom((y, x), [car], self.time + 1)
-                        self.booms.add(boom)
-                        boom.activate(self.free_neighbours((y, x)))
+                        self.booms.add(Boom((y, x), [car], self.time + 1))
                         next_row, next_col = car.row + vy * (x - car.col) // vx, x
                         car.set_velocity((0, 0))
                         break
@@ -273,9 +274,7 @@ class Game:
                         car.set_velocity((0, 0))
                     if not self.labyrinth.is_in_map((y, x)) or \
                             not self.labyrinth.is_free((y, x)):
-                        boom = Boom((y, x), [car], self.time + 1)
-                        self.booms.add(boom)
-                        boom.activate(self.free_neighbours((y, x)))
+                        self.booms.add(Boom((y, x), [car], self.time + 1))
                         next_row, next_col = y, car.col + vx * (y - car.row) // vy
                         car.set_velocity((0, 0))
                         break
@@ -293,11 +292,11 @@ class Game:
                 cars_coords[(next_row, next_col)].append(car)
         for coords in cars_coords:
             if len(cars_coords[coords]) > 1:
-                boom = Boom(coords, cars_coords[coords], self.time + 1)
-                self.booms.add(boom)
-                boom.activate(self.free_neighbours(coords))
+                self.booms.add(Boom(coords, cars_coords[coords], self.time + 1))
                 for car in cars_coords[coords]:
                     car.set_velocity((0, 0))
+        for boom in self.booms:
+            boom.activate(self.free_neighbours(boom.get_position()))
 
     def check_winners(self) -> list[str]:
         for car in self.cars:
@@ -306,7 +305,7 @@ class Game:
             if self.labyrinth.get_tile_id(car.get_position()) == self.labyrinth.finish_tile:
                 car.finished = True
                 self.results.append((car.name, self.time))
-        if len(self.results) < 3:
+        if len(self.results) < WINNERS_NUMBER:
             return []
         return self.results
 
@@ -345,7 +344,7 @@ def main():
 
     start_positions = labyrinth.get_start_positions()
     shuffle(start_positions)
-    cars = [Car(car_images[p["img"]], p["bot"], start_positions.pop(), p["name"]) for p in PLAYERS]
+    cars = [Car(car_images[p["img"]], p["bot"], start_positions.pop(), p["name"], p["level"]) for p in PLAYERS]
 
     game = Game(labyrinth, cars)
 
