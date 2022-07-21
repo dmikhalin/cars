@@ -14,7 +14,8 @@ PLAYERS = [{"name": "Speedy", "bot": move1, "img": 0, "level": 0.8},
            {"name": "McQueen", "bot": move1, "img": 2, "level": 0.5},
            {"name": "Quido", "bot": move1, "img": 3, "level": 0.3},
            {"name": "Ramone", "bot": move2, "img": 4, "level": 0},
-           {"name": "Lizzie", "bot": move0, "img": 5, "level": 0}]
+           {"name": "Лизанька", "bot": move0, "img": 5, "level": 0},
+           ]
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1000, 800
 FPS = 20
 MAPS_DIR = "maps"
@@ -181,6 +182,7 @@ class Game:
 
     def render(self, screen):
         self.labyrinth.render(screen)
+        self.show_legend(screen)
         for car in self.cars:
             car.render(screen, self.labyrinth.tile_size)
         for boom in list(self.booms):
@@ -313,11 +315,24 @@ class Game:
             return []
         return self.results
 
+    def show_legend(self, screen):
+        for i in range(len(self.cars)):
+            car = self.cars[i]
+            if car.image.get_width() != self.labyrinth.tile_size:
+                car.image = pygame.transform.smoothscale(car.image, (self.labyrinth.tile_size,
+                                                                     self.labyrinth.tile_size * 1.6))
+            screen.blit(car.image, (self.labyrinth.width * self.labyrinth.tile_size + 30,
+                                    50 + i * 50))
+            font = pygame.font.Font(None, 30)
+            text = font.render(car.name, 1, (150, 200, 200))
+            text_x = self.labyrinth.width * self.labyrinth.tile_size + 60
+            text_y = 60 + i * 50
+            screen.blit(text, (text_x, text_y))
 
 
 def show_message(screen, message):
     font = pygame.font.Font(None, 30)
-    text = font.render(message, 1, (150, 255, 255))
+    text = font.render(message, 1, (150, 200, 200))
     text_x = WINDOW_WIDTH // 2 - text.get_width() // 2
     text_y = WINDOW_HEIGHT // 2 - text.get_height() // 2
     text_w = text.get_width()
