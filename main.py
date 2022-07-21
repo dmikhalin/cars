@@ -318,7 +318,8 @@ class Game:
                 car.finished = True
                 car.result = self.time
                 self.results.append((car.name, self.time))
-        if len(self.results) < WINNERS_NUMBER:
+        if len(self.results) < WINNERS_NUMBER or \
+                max(self.cars, key=lambda car: car.result if car.finished else 0).result == self.time:
             return []
         return self.results
 
