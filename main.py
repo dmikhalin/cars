@@ -14,9 +14,9 @@ PLAYERS = [{"name": "Speedy", "bot": move1, "img": 0, "level": 0.8},
            {"name": "McQueen", "bot": move1, "img": 2, "level": 0.5},
            {"name": "Quido", "bot": move1, "img": 3, "level": 0.3},
            {"name": "Ramone", "bot": move2, "img": 4, "level": 0},
-           {"name": "Лизанька", "bot": move0, "img": 5, "level": 0},
+           {"name": "Lizzie", "bot": move0, "img": 5, "level": 0},
            ]
-WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1000, 800
+WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1100, 800
 FPS = 20
 MAPS_DIR = "maps"
 IMAGES_DIR = "images"
@@ -89,6 +89,7 @@ class Car:
         self.paused = False
         self.level = level
         self.time = time
+        self.result = 10 ** 6
 
     def get_position(self):
         return self.row, self.col
@@ -114,6 +115,9 @@ class Car:
     def move_real(self):
         self.real_x += self.real_vx
         self.real_y += self.real_vy
+
+    def rotate_random(self):
+        self.rotate_angle = randint(0, 359)
 
     def render(self, screen, tile_size):
         if self.image.get_width() != tile_size:
@@ -152,8 +156,6 @@ class Boom:
             for car in self.cars:
                 if free_tiles:
                     car.set_position(free_tiles.pop())
-                # car.paused = False
-                # car.rotate_angle = randint(0, 359)
             self.activated = True
 
     def render(self, screen, tile_size):
@@ -224,6 +226,10 @@ class Game:
         for car in self.cars:
             if car.time == self.time:
                 car.move_real()
+            else:
+                car.set_real_position(car.get_position())
+                if not car.finished:
+                   car.rotate_random()
 
     def move_cars(self):
         self.time += 1
@@ -310,12 +316,14 @@ class Game:
                 continue
             if self.labyrinth.get_tile_id(car.get_position()) in self.labyrinth.finish_tiles:
                 car.finished = True
+                car.result = self.time
                 self.results.append((car.name, self.time))
         if len(self.results) < WINNERS_NUMBER:
             return []
         return self.results
 
     def show_legend(self, screen):
+        self.cars.sort(key=lambda x: x.result)
         for i in range(len(self.cars)):
             car = self.cars[i]
             if car.image.get_width() != self.labyrinth.tile_size:
@@ -325,9 +333,10 @@ class Game:
                                     50 + i * 50))
             font = pygame.font.Font(None, 30)
             text = font.render(car.name, 1, (150, 200, 200))
-            text_x = self.labyrinth.width * self.labyrinth.tile_size + 60
-            text_y = 60 + i * 50
-            screen.blit(text, (text_x, text_y))
+            screen.blit(text, (self.labyrinth.width * self.labyrinth.tile_size + 60, 60 + i * 50))
+            if car.finished:
+                text = font.render(str(car.result), 1, (150, 200, 200))
+                screen.blit(text, (self.labyrinth.width * self.labyrinth.tile_size + 250, 60 + i * 50))
 
 
 def show_message(screen, message):
@@ -358,7 +367,7 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
 
-    labyrinth = Labyrinth(LEVELS[1])
+    labyrinth = Labyrinth(LEVELS[0])
     car_images = load_car_images()
 
     start_positions = labyrinth.get_start_positions()
@@ -383,7 +392,7 @@ def main():
         game.render(screen)
         if winners := game.check_winners():
             game_over = True
-            show_message(screen, "Winners: " + ", ".join(f"{player[0]}: {player[1]}" for player in winners))
+            # show_message(screen, "Winners: " + ", ".join(f"{player[0]}: {player[1]}" for player in winners))
         pygame.display.flip()
         clock.tick(FPS)
     pygame.quit()
