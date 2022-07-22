@@ -122,8 +122,8 @@ class Car:
     def render(self, screen, tile_size):
         if self.image.get_width() != tile_size:
             self.image = pygame.transform.smoothscale(self.image, (tile_size, tile_size * 1.6))
-        if self.vx != 0 or self.vy != 0:
-            self.rotate_angle = atan2(-self.real_vy, self.real_vx) * 180 / pi - 90
+        # if not self.paused and (self.real_vx != 0 or self.real_vy != 0):
+        #     self.rotate_angle = atan2(-self.real_vy, self.real_vx) * 180 / pi - 90
         rotated_image = pygame.transform.rotate(self.image, self.rotate_angle)
         delta_x = (rotated_image.get_width() - tile_size) // 2
         delta_y = (rotated_image.get_height() - tile_size) // 2
@@ -226,6 +226,8 @@ class Game:
         for car in self.cars:
             if car.time == self.time:
                 car.move_real()
+                if car.get_real_position() != (0, 0):
+                    car.rotate_angle = atan2(-car.real_vy, car.real_vx) * 180 / pi - 90
             else:
                 car.set_real_position(car.get_position())
                 if not car.finished:
