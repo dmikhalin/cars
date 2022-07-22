@@ -10,15 +10,15 @@ def move(track: list[str], car_position: tuple[int, int], velocity: tuple[int, i
         "S" --- start position
         "F" --- finish
         "C" --- cars
-    :param car_position: (row, col), rows --- from top to bottom, 0-indexed
-    :param velocity: (v_row, v_col)
-    :return: new velocity (new_v_row, new_v_col), such that
-             abs(new_v_row - v_row) <= 1 and abs(new_v_col - v_col) <= 1
+    :param car_position: (x, y), y --- from top to bottom, 0-indexed
+    :param velocity: (vx, vy)
+    :return: new velocity (new_vx, new_vy), such that
+             abs(new_vx - vx) <= 1 and abs(new_vy - vy) <= 1
     """
-    row, col = car_position
-    v_row, v_col = velocity
+    x, y = car_position
+    vx, vy = velocity
 
-    return randint(v_row - 1, v_row + 1), randint(v_col - 1, v_col + 1)
+    return randint(vx - 1, vx + 1), randint(vy - 1, vy + 1)
 
 
 def main():

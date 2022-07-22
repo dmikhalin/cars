@@ -11,10 +11,10 @@ from player_slow.bot import move as move2
 
 PLAYERS = [{"name": "Speedy", "bot": move1, "img": 0, "level": 0.8},
            {"name": "Luigi", "bot": move1, "img": 1, "level": 0.6},
-           {"name": "McQueen", "bot": move1, "img": 2, "level": 0.5},
-           {"name": "Quido", "bot": move1, "img": 3, "level": 0.3},
+           {"name": "McQueen", "bot": move2, "img": 2, "level": 0.5},
+           {"name": "Quido", "bot": move2, "img": 3, "level": 0.3},
            {"name": "Ramone", "bot": move2, "img": 4, "level": 0},
-           {"name": "Lizzie", "bot": move0, "img": 5, "level": 0},
+           {"name": "Lizzie", "bot": move2, "img": 5, "level": 0},
            ]
 WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1100, 800
 FPS = 20
@@ -250,9 +250,12 @@ class Game:
             if not car.lost_control:
                 try:
                     with time_limit(1):
-                        vy, vx = car.move(track_map[:], car.get_position(), car.get_velocity())
+                        vx, vy = car.move(track_map[:], car.get_position()[::-1], car.get_velocity()[::-1])
                 except TimeoutException as e:
                     print("Timed out!")
+                    car.lost_control = True
+                except BaseException:
+                    print("Bot error!")
                     car.lost_control = True
 
             if abs(vx - car.vx) > 1 or abs(vy - car.vy) > 1:
@@ -262,15 +265,15 @@ class Game:
                 shift = 1 if vx > 0 else -1
                 x = car.col
                 while x != next_col + shift:
-                    y = car.row + vy * (x - car.col) // vx
+                    y = car.row + round(vy * (x - car.col) / vx)
                     if self.labyrinth.is_finish((y, x)):
-                        next_row, next_col = car.row + vy * (x - car.col) // vx, x
+                        next_row, next_col = car.row + round(vy * (x - car.col) / vx), x
                         car.set_velocity((0, 0))
                         break
                     elif not self.labyrinth.is_in_map((y, x)) or \
                             not self.labyrinth.is_free((y, x)):
                         self.booms.add(Boom((y, x), [car], self.time + 1))
-                        next_row, next_col = car.row + vy * (x - car.col) // vx, x
+                        next_row, next_col = car.row + round(vy * (x - car.col) / vx), x
                         car.set_velocity((0, 0))
                         break
                     x += shift
@@ -280,14 +283,14 @@ class Game:
                 shift = 1 if vy > 0 else -1
                 y = car.row
                 while y != next_row + shift:
-                    x = car.col + vx * (y - car.row) // vy
+                    x = car.col + round(vx * (y - car.row) / vy)
                     if self.labyrinth.is_finish((y, x)):
-                        next_row, next_col = y, car.col + vx * (y - car.row) // vy
+                        next_row, next_col = y, car.col + round(vx * (y - car.row) / vy)
                         car.set_velocity((0, 0))
                     if not self.labyrinth.is_in_map((y, x)) or \
                             not self.labyrinth.is_free((y, x)):
                         self.booms.add(Boom((y, x), [car], self.time + 1))
-                        next_row, next_col = y, car.col + vx * (y - car.row) // vy
+                        next_row, next_col = y, car.col + round(vx * (y - car.row) / vy)
                         car.set_velocity((0, 0))
                         break
                     y += shift
