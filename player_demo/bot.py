@@ -1,7 +1,7 @@
 from random import randint
 
 
-def move(track: list[str], car_position: tuple[int, int], velocity: tuple[int, int]) -> tuple[int, int]:
+def move(track, car_position, velocity):
     """
     Do your move! Accelerate, break or keep moving with the previous speed!
     :param track: Map of the track:

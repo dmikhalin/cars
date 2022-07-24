@@ -18,6 +18,7 @@ FPS = 20
 MAPS_DIR = "maps"
 IMAGES_DIR = "images"
 LEVELS = ["map1.tmx", "map2.tmx"]
+CURRENT_LEVEL = 0
 EVENT_TYPE = 30
 DELAY = 300
 FRAMES_PER_TICK = FPS * DELAY // 1000
@@ -50,7 +51,7 @@ class Labyrinth:
             return 0
         return self.track.tiledgidmap[gid]
 
-    def get_start_positions(self) -> list[tuple[int, int]]:
+    def get_start_positions(self):
         result = []
         for row in range(self.height):
             for col in range(self.width):
@@ -148,7 +149,7 @@ class Boom:
     def get_position(self):
         return self.row, self.col
 
-    def activate(self, free_tiles: set[tuple[int, int]]):
+    def activate(self, free_tiles):
         if not self.activated:
             for car in self.cars:
                 if free_tiles:
@@ -199,7 +200,7 @@ class Game:
                 self.labyrinth.is_free((row + dy, col + dx)) and
                 ((row + dy, col + dx) not in cars_coords)}
 
-    def symbol_map(self) -> list[str]:
+    def symbol_map(self):
         track_map = []
         cars_coords = {car.get_position() for car in self.cars}
         for i in range(self.labyrinth.track.height):
@@ -302,7 +303,7 @@ class Game:
         for boom in self.booms:
             boom.activate(self.free_neighbours(boom.get_position()))
 
-    def check_winners(self) -> list[str]:
+    def check_winners(self):
         for car in self.cars:
             if car.finished:
                 continue
@@ -343,7 +344,7 @@ def show_message(screen, message):
     screen.blit(text, (text_x, text_y))
 
 
-def load_car_images() -> list:
+def load_car_images():
     car_surfaces = [pygame.Surface((60, 100)).convert_alpha() for i in range(6)]
     all_cars = pygame.image.load(f"{IMAGES_DIR}/cars1.png").convert_alpha()
     car_surfaces[0].blit(all_cars, (0, 0), (65, 115, 60, 100))
@@ -359,7 +360,7 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
 
-    labyrinth = Labyrinth(LEVELS[0])
+    labyrinth = Labyrinth(LEVELS[CURRENT_LEVEL])
     car_images = load_car_images()
 
     start_positions = labyrinth.get_start_positions()
@@ -382,7 +383,7 @@ def main():
                 game.move_cars()
         screen.fill((0, 0, 0))
         game.render(screen)
-        if winners := game.check_winners():
+        if game.check_winners():
             game_over = True
             # show_message(screen, "Winners: " + ", ".join(f"{player[0]}: {player[1]}" for player in winners))
         pygame.display.flip()
