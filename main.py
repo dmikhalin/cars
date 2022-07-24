@@ -5,22 +5,37 @@ from math import atan2, pi
 from random import randint, shuffle, random
 from timelimit import time_limit, TimeoutException
 
-from player_demo.bot import move as move0
+from player_demo.bot_my import move as move0
 from player_dm.bot import move as move1
 from player_slow.bot import move as move2
+from player_demo.ArSarapkin import move as move_sarapkin
+from player_demo.Dima_Kuznetsov_bot import move as move_kuznetsov
+from player_demo.bot_kot import move as move_kot
+from player_demo.shaposhnik import move as move_shap
+from player_demo.WA1 import move as move_kmes
+from player_demo.bot_kosyak import move as move_kosyak
+from player_demo.PAPRIKAZUGENERALAGAVSA import move as move_pronkin
+from player_demo.bot_kolobov import move as move_kolobov
+from player_demo.not_a_griefer import move as move_timofey
 
-PLAYERS = [{"name": "Speedy", "bot": move1, "img": 0, "level": 0.8},
-           {"name": "Luigi", "bot": move1, "img": 1, "level": 0.6},
-           {"name": "McQueen", "bot": move2, "img": 2, "level": 0.5},
-           {"name": "Quido", "bot": move2, "img": 3, "level": 0.3},
-           {"name": "Ramone", "bot": move2, "img": 4, "level": 0},
-           {"name": "Lizzie", "bot": move2, "img": 5, "level": 0},
+PLAYERS = [{"name": "ArSarapkin", "bot": move_sarapkin, "img": 0, "level": 0.3},
+           {"name": "Dima Kuznetsov", "bot": move_kuznetsov, "img": 1, "level": 0.3},
+           {"name": "Daniil Kotelnikov", "bot": move_kot, "img": 2, "level": 0.3},
+           # {"name": "Shaposhnik", "bot": move_shap, "img": 3, "level": 0.3},
+           # {"name": "Andrey Kolobov", "bot": move_kolobov, "img": 3, "level": 0.3},
+           {"name": "kmes", "bot": move_kmes, "img": 4, "level": 0.3},
+           # {"name": "Kosyak", "bot": move_kosyak, "img": 5, "level": 0.3},
+           # {"name": "Dima Pronkin", "bot": move_pronkin, "img": 5, "level": 0.3},
+           # {"name": "Timofey", "bot": move_timofey, "img": 1, "level": 0.3},
+           {"name": "Speedy", "bot": move1, "img": 3, "level": 0.3},
+           {"name": "McQueen", "bot": move2, "img": 5, "level": 0.3},
            ]
-WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1100, 800
+WINDOW_SIZE = WINDOW_WIDTH, WINDOW_HEIGHT = 1300, 1000
 FPS = 20
 MAPS_DIR = "maps"
 IMAGES_DIR = "images"
-LEVELS = ["map1.tmx", "map2.tmx"]
+LEVELS = ["map1.tmx", "map2.tmx", "map3.tmx", "map4.tmx"]
+CURRENT_LEVEL = 3
 EVENT_TYPE = 30
 DELAY = 300
 FRAMES_PER_TICK = FPS * DELAY // 1000
@@ -151,7 +166,7 @@ class Boom:
     def get_position(self):
         return self.row, self.col
 
-    def activate(self, free_tiles: set[tuple[int, int]]):
+    def activate(self, free_tiles: list[tuple[int, int]]):
         if not self.activated:
             for car in self.cars:
                 if free_tiles:
@@ -194,13 +209,15 @@ class Game:
                 if boom.ended:
                     self.booms.discard(boom)
 
-    def free_neighbours(self, position):
+    def free_neighbours(self, position) -> list[tuple[int, int]]:
         row, col = position
         cars_coords = {car.get_position() for car in self.cars}
-        return {(row + dy, col + dx) for dx in (-1, 0, 1) for dy in (-1, 0, 1)
-                if self.labyrinth.is_in_map((row + dy, col + dx)) and
-                self.labyrinth.is_free((row + dy, col + dx)) and
-                ((row + dy, col + dx) not in cars_coords)}
+        result = [(row + dy, col + dx) for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+                  if self.labyrinth.is_in_map((row + dy, col + dx)) and
+                  self.labyrinth.is_free((row + dy, col + dx)) and
+                  ((row + dy, col + dx) not in cars_coords)]
+        shuffle(result)
+        return result
 
     def symbol_map(self) -> list[str]:
         track_map = []
@@ -254,10 +271,10 @@ class Game:
                     with time_limit(1):
                         vx, vy = car.move(track_map[:], car.get_position()[::-1], car.get_velocity()[::-1])
                 except TimeoutException as e:
-                    print("Timed out!")
+                    print(f"{car.name}: Timed out!")
                     car.lost_control = True
                 except BaseException:
-                    print("Bot error!")
+                    print(f"{car.name}: Bot error!")
                     car.lost_control = True
 
             if abs(vx - car.vx) > 1 or abs(vy - car.vy) > 1:
@@ -298,6 +315,9 @@ class Game:
                     y += shift
                 else:
                     car.set_velocity((vy, vx))
+            else:
+                next_row, next_col = car.row, car.col
+                car.set_velocity((vy, vx))
             car.set_real_position(car.get_position())
             car.set_position((next_row, next_col))
             real_vy = (next_row - car.get_real_position()[0]) / FRAMES_PER_TICK
@@ -373,7 +393,7 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
 
-    labyrinth = Labyrinth(LEVELS[0])
+    labyrinth = Labyrinth(LEVELS[CURRENT_LEVEL])
     car_images = load_car_images()
 
     start_positions = labyrinth.get_start_positions()

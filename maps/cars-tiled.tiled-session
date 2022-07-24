@@ -24,6 +24,30 @@
         },
         "map1.tmx#spritesheet_tiles": {
             "scaleInDock": 0.2136
+        },
+        "map2.tmx": {
+            "scale": 0.1679,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 1920.7861822513403,
+                "y": 1902.9184038117926
+            }
+        },
+        "map3.tmx": {
+            "scale": 0.1458,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 2136.4883401920433,
+                "y": 2328.5322359396437
+            }
+        },
+        "map4.tmx": {
+            "scale": 0.1333,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 2516.8792198049514,
+                "y": 2531.882970742686
+            }
         }
     },
     "last.imagePath": "/Users/dmitry/Documents/python/PyCharm/cars/maps",
@@ -32,6 +56,7 @@
     "map.renderOrder": null,
     "map.tileHeight": 128,
     "map.tileWidth": 128,
+    "map.width": 30,
     "openFiles": [
     ],
     "project": "cars-tiled.tiled-project",
