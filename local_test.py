@@ -286,6 +286,9 @@ class Game:
                     y += shift
                 else:
                     car.set_velocity((vy, vx))
+            else:
+                next_row, next_col = car.row, car.col
+                car.set_velocity((vy, vx))
             car.set_real_position(car.get_position())
             car.set_position((next_row, next_col))
             real_vy = (next_row - car.get_real_position()[0]) / FRAMES_PER_TICK
