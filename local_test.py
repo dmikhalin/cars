@@ -246,7 +246,7 @@ class Game:
             car.time = self.time
             vy, vx = car.get_velocity()
             if not car.lost_control:
-                vy, vx = car.move(track_map[:], car.get_position(), car.get_velocity())
+                vx, vy = car.move(track_map[:], car.get_position()[::-1], car.get_velocity()[::-1])
 
             if abs(vx - car.vx) > 1 or abs(vy - car.vy) > 1:
                 vy, vx = car.get_velocity()
